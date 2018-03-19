@@ -45,15 +45,19 @@ $(function() {
             thereIs2 = snapshot.hasChild("player/2");
             console.log("Player2: " + thereIs2);
 
+            // If player one has made a choice...
             if (snapshot.hasChild("player/1/choice") && !(snapshot.child("player/1/choice").val() === "")) {
+                // ... update the variable for player one.
                 player1.choice = snapshot.child("player/1/choice").val();
             }
 
+            // If player two has made a choice...
             if (snapshot.hasChild("player/2/choice") && !(snapshot.child("player/2/choice").val() === "")) {
+                // ...update the local variable for player two.
                 player2.choice = snapshot.child("player/2/choice").val();
             }
 
-            // ...displays player information, if avaiable...
+            // Displays player information, if avaiable...
             if (thereIs1) {
                 player1.name = snapshot.child("player/1/name").val();
                 $("#user1-name").text(player1.name);
@@ -77,10 +81,13 @@ $(function() {
                 div.html($("<p>").text("Waiting for Player 2"))
             }
 
+            // Displays the login form, if there is room for a player.
             if ((!(thereIs1) || !(thereIs2)) && !(login)) {
                 displayLogin();
                 login = true;
             }
+
+            // Resets player one's information, if they leave.
             if (!(thereIs1)) {
                 console.log("wiped;;;;;;;;;");
                 player1 = {
@@ -91,6 +98,7 @@ $(function() {
                 };
             }
 
+            // Resets player two's information, if they leave.
             if (!(thereIs2)) {
                 console.log("wiped;;;;;;;;;");
                 player2 = {
@@ -101,6 +109,7 @@ $(function() {
                 };
             }
 
+            // If these two users have not played a round yet, start their first round and iterate the round variable.
             if (thereIs1 && thereIs2 && round === 0) {
                 console.log("first round started::::");
                 round = 1;
@@ -283,7 +292,9 @@ $(function() {
         // ...return compared to false...
         compared = false;
         // ...iterate the round variable...
-        round++;
+        if (round !== 1) {
+            round++;
+        }
         database.ref().update({ round: round });
         $("#announce").empty();
         $("#list").empty();
