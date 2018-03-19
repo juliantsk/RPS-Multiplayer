@@ -14,7 +14,7 @@ var database = firebase.database();
 var player1 = {
     name: "",
     wins: 0,
-    loses: 0,
+    losses: 0,
     choice: ""
 };
 
@@ -29,57 +29,48 @@ var login = false;
 var player2 = {
     name: "",
     wins: 0,
-    loses: 0,
+    losses: 0,
     choice: ""
 };
 
 var round = 0;
 
-$(document).ready(function() {
+// JQuery for document.ready. 
+$(function() {
 
     database.ref().on("value", function(snapshot) {
-            var noPlayerExists = (!(snapshot.child("player/1").exists()) && !(snapshot.child("player/2").exists()));
-
+            // Checking if each player exists on the database.
             thereIs1 = snapshot.hasChild("player/1");
-            console.log("one" + thereIs1);
+            console.log("Player1: " + thereIs1);
             thereIs2 = snapshot.hasChild("player/2");
-            console.log("two" + thereIs2);
-            round = snapshot.child("round").val();
+            console.log("Player2: " + thereIs2);
 
-            if (snapshot.hasChild("player/1/choice")) {
+            if (snapshot.hasChild("player/1/choice") && !(snapshot.child("player/1/choice").val() === "")) {
                 player1.choice = snapshot.child("player/1/choice").val();
-            } else {
-                player1.choice = "";
             }
 
-            if (snapshot.hasChild("player/2/choice")) {
+            if (snapshot.hasChild("player/2/choice") && !(snapshot.child("player/2/choice").val() === "")) {
                 player2.choice = snapshot.child("player/2/choice").val();
-            } else {
-                player2.choice = "";
             }
 
             // ...displays player information, if avaiable...
             if (thereIs1) {
-                $("#list1").empty();
-                var div = $("#user1");
+                player1.name = snapshot.child("player/1/name").val();
                 $("#user1-name").text(player1.name);
                 player1.wins = snapshot.child("player/1/wins").val();
-                player1.loses = snapshot.child("player/1/loses").val();
-                $("#user1-record").text("Wins: " + player1.wins + " Loses: " + player1.loses);
+                player1.losses = snapshot.child("player/1/losses").val();
+                $("#user1-record").text("Wins: " + player1.wins + " losses: " + player1.losses);
             } else {
                 $("#user1-name, #list1, #user1-record").empty();
                 var div = $("#list1");
                 div.html($("<p>").text("Waiting for Player 1"))
             }
             if (thereIs2) {
-                $("#list2").empty();
-                var div = $("#user2");
                 player2.name = snapshot.child("player/2/name").val();
                 $("#user2-name").text(player2.name).val();
                 player2.wins = snapshot.child("player/2/wins").val();
-                player2.loses = snapshot.child("player/2/loses").val();
-                $("#user1-record").text("Wins: " + player2.wins + " Loses: " + player2.loses);
-                $("#user2-record").text("Wins: " + player2.wins + " Loses: " + player2.loses);
+                player2.losses = snapshot.child("player/2/losses").val();
+                $("#user2-record").text("Wins: " + player2.wins + " losses: " + player2.losses);
             } else {
                 $("#user2-name, #list2, #user2-record").empty();
                 var div = $("#list2");
@@ -90,10 +81,29 @@ $(document).ready(function() {
                 displayLogin();
                 login = true;
             }
+            if (!(thereIs1)) {
+                console.log("wiped;;;;;;;;;");
+                player1 = {
+                    name: "",
+                    wins: 0,
+                    losses: 0,
+                    choice: ""
+                };
+            }
 
-            if (thereIs1 && thereIs2 && firstRound) {
+            if (!(thereIs2)) {
+                console.log("wiped;;;;;;;;;");
+                player2 = {
+                    name: "",
+                    wins: 0,
+                    losses: 0,
+                    choice: ""
+                };
+            }
+
+            if (thereIs1 && thereIs2 && round === 0) {
                 console.log("first round started::::");
-                firstRound = false;
+                round = 1;
                 newRound();
             }
 
@@ -103,6 +113,7 @@ $(document).ready(function() {
             if (snapshot.child("player/1/choice").exists() && snapshot.child("player/2/choice").exists() && snapshot.child("player/1/choice") !== "" && snapshot.child("player/2/choice") !== "" && (!(compared))) {
                 player1.choice = snapshot.child("player/1/choice").val();
                 player2.choice = snapshot.child("player/2/choice").val();
+                compared = true;
                 findWinner();
             }
         },
@@ -182,23 +193,21 @@ $(document).ready(function() {
         if (playerNumber === 1) {
             player1.choice = $(this).text();
             // ...push it to the database...
-            database.ref("player/1").update({
-                choice: player1.choice
-            });
+            database.ref("player/1").update({ choice: player1.choice });
+            // ...replace choices with user choice...
+            $("#list1").html($("<h1>").text($(this).text()));
+
         } else if (playerNumber === 2) {
             player2.choice = $(this).text();
             // ...push it to the database...
-            database.ref("player/2").update({
-                choice: player2.choice
-            });
+            database.ref("player/2").update({ choice: player2.choice });
+            // ...replace choices with user choice...
+            $("#list2").html($("<h1>").text($(this).text()));
         }
-        console.log(player1.choice);
-        console.log(player2.choice);
-        // ...replace choices with user choice...
-        $("#list").html($("<h1>").text($(this).text()));
+        console.log("player1 choice: " + player1.choice);
+        console.log("player2 choice: " + player2.choice);
         // ...compare if both choices have been made.
         if (player1.choice !== "" && player2.choice !== "") {
-            console.log("COMPARING");
             updateRecords();
         }
     }
@@ -210,77 +219,86 @@ $(document).ready(function() {
             displayWinner("draw");
         } else if ((player1.choice === "Rock" && player2.choice === "Paper") || (player1.choice === "Scissors" && player2.choice === "Rock") || (player1.choice === "Paper" && player2.choice == "Scissors")) {
             // ...display Winner...
-            displayWinner(player1.name);
+            displayWinner(player2.name);
 
         } else if ((player1.choice === "Paper" && player2.choice == "Rock") || (player1.choice === "Rock" && player2.choice === "Scissors") || (player1.choice === "Scissors" && player2.choice === "Paper")) {
             // ...display Winner...
-            displayWinner(player2.name);
+            displayWinner(player1.name);
         } else {}
-        compared = true;
     }
 
     function updateRecords() {
+        console.log("UPDATING RECORDS");
         // If there is a tie...
-        if (player1.choice === player2.choice) {} else if ((player1.choice === "Rock" && player2.choice === "Paper") || (player1.choice === "Scissors" && player2.choice === "Rock") || (player1.choice === "Paper" && player2.choice == "Scissors")) {
-            // ...if player1 wins...
-            player1.wins++;
-            player2.loses--;
+        if ((player1.choice === "Rock" && player2.choice === "Paper") || (player1.choice === "Scissors" && player2.choice === "Rock") || (player1.choice === "Paper" && player2.choice == "Scissors")) {
+            // ...if player2 wins...
+            player2.wins++;
+            player1.losses++;
+            console.log(player2.wins + " p1lose: " + player1.losses);
             // ...update the users' records to the database...
-            database.ref("player/1").update({ wins: player1.wins });
-            database.ref("player/2").update({ loses: player2.loses });
-            // ...update the lastWinner variable...
-            compared = true;
+            database.ref("player").update({ 1: player1, 2: player2 });
 
         } else if ((player1.choice === "Paper" && player2.choice == "Rock") || (player1.choice === "Rock" && player2.choice === "Scissors") || (player1.choice === "Scissors" && player2.choice === "Paper")) {
-            player2.wins++;
-            player1.loses--;
+            // ...if player1 wins...
+            player1.wins++;
+            player2.losses++;
+            console.log(player1.wins + " p2lose: " + player2.losses);
             // ...update the users' records to the database...
-            database.ref("player/2").update({ wins: player2.wins });
-            database.ref("player/1").update({ loses: player1.loses });
+            database.ref("player").update({ 1: player1, 2: player2 });
             // ...update the lastWinner variable...
-            lastWinner = player2.name;
-            displayWinner(player2.name);
-            compared = true;
         } else {
             // Handle other inputs, issues.
         }
-        // ...clear their choices from the database...
-        database.ref("player/1/choice").remove();
-        database.ref("player/2/choice").remove();
         // ...clear their choices from the local variables...
 
 
     }
 
     function displayWinner(winner) {
-        // Remove the user's choice from their user div...
-        $("#list" + playerNumber).empty();
+        console.log("display WINNNER")
+            // Display choices in players' lists...
+        $("#list1").html($("<h1>").text(player1.choice));
+        $("#list2").html($("<h1>").text(player2.choice));
         // Display the winner in the announce div...
         var div = $("#announce");
         if (winner === "draw") {
             div.append($("<h1>").text("It was a draw!"));
         } else {
-            div.append($("<h1>").text(winner))
+            div.append($("<h1>").text(winner + " has won!"))
         }
         // ...and initiate a new round, after a time out.
-        console.log("NEW ROUND");
-        setTimeout(newRound, 20000);
+        setTimeout(newRound, 5000);
     }
 
     function newRound() {
+        console.log("NEW ROUND");
+        // Empty the player's lists...
+        $("#list1").empty();
+        $("#list2").empty();
+        // ...clear their choices from the database...
+        database.ref("player/1/choice").remove();
+        database.ref("player/2/choice").remove();
+        player1.choice = "";
+        player2.choice = "";
+        // ...return compared to false...
+        compared = false;
         // ...iterate the round variable...
         round++;
         database.ref().update({ round: round });
         $("#announce").empty();
+        $("#list").empty();
         // Display the choices to the users.
-        if (!($("#list").length)) {
-            var list = $("<div>").attr("id", "list");
-            list.append($("<p>").text("Rock").addClass("choices"));
-            list.append($("<p>").text("Paper").addClass("choices"));
-            list.append($("<p>").text("Scissors").addClass("choices"));
-            console.log("placing choices.........");
-            list.insertAfter("#user" + playerNumber + "-name");
+        console.log("placing choices.........");
+        if (playerNumber === 1) {
+            var list = $("#list1");
         }
+        if (playerNumber === 2) {
+            var list = $("#list2");
+        }
+        list.empty();
+        list.append($("<p>").text("Rock").addClass("choices"));
+        list.append($("<p>").text("Paper").addClass("choices"));
+        list.append($("<p>").text("Scissors").addClass("choices"));
     }
 
     function displayChat() {
@@ -293,9 +311,7 @@ $(document).ready(function() {
         // ...reinitiate the round variable to zero...
         round = 0;
         // ...update the round variable in the database...
-        database.ref().update({
-            round: round
-        });
+        database.ref().update({ round: round });
         // ...delete user data from database.
         if (playerNumber === 1) {
             database.ref().child("player/1").remove();
