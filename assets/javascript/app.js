@@ -11,6 +11,9 @@ firebase.initializeApp(config);
 
 var database = firebase.database();
 
+// Initiates messaging.
+var messaging = firebase.messaging();
+
 var player1 = {
     name: "",
     wins: 0,
@@ -20,7 +23,6 @@ var player1 = {
 
 var playerNumber = null;
 var firstRound = true;
-var lastWinner;
 var thereIs1 = false;
 var thereIs2 = false;
 var compared = false;
@@ -34,6 +36,8 @@ var player2 = {
 };
 
 var round = 0;
+
+
 
 // JQuery for document.ready. 
 $(function() {
@@ -96,6 +100,7 @@ $(function() {
                     losses: 0,
                     choice: ""
                 };
+                $("#list2").empty();
             }
 
             // Resets player two's information, if they leave.
@@ -107,6 +112,7 @@ $(function() {
                     losses: 0,
                     choice: ""
                 };
+                $("#list1").empty();
             }
 
             // If these two users have not played a round yet, start their first round and iterate the round variable.
@@ -162,18 +168,12 @@ $(function() {
         if (playerNumber === 1) {
             database.ref().child("player/" + playerNumber).update(player1);
             database.ref("player/1/choice").remove();
+            $("#header").html($("<h1>").text("Hello, " + player1.name + "! You are Player 1."))
         } else if (playerNumber === 2) {
             database.ref().child("player/" + playerNumber).update(player2);
             database.ref("player/2/choice").remove();
+            $("#header").html($("<h1>").text("Hello, " + player2.name + "! You are Player 2."))
         }
-        // ...if both users have names, set round to 1 and start a newRound...
-        // if (player1.name !== "" && player2.name !== "") {
-        //     round = 1;
-        //     database.ref().update({ round: round });
-        //     newRound();
-        // }
-        // ...empty the header div.
-        $("#header").empty();
     }
 
     function setPlayerNumber() {
@@ -295,6 +295,7 @@ $(function() {
         if (round !== 1) {
             round++;
         }
+        // ...update the round variable to the database.
         database.ref().update({ round: round });
         $("#announce").empty();
         $("#list").empty();
@@ -312,7 +313,48 @@ $(function() {
         list.append($("<p>").text("Scissors").addClass("choices"));
     }
 
+    // Displays the chat log from firebase.
     function displayChat() {
+        // When a new child is added to the chat node...
+        database.ref("chat").on("child_added", function(snapshot) {
+            // ...set new child to a variable...
+            var msg = snapshot.val();
+            // ...set a new bold element to a variable...
+            var msgName = $("<b>").addClass("message-name");
+            // ...add the username to the text of the bold element...
+            msgName.text(msg.username);
+
+            // ...set a new p tag to a variable...
+            var msgText = $("<p>").addClass("message-text");
+            // ...add the message text to the p tag...
+            msgText.text(msg.text);
+
+            // ...make a new div and set it to a variable...
+            var msgDiv = $("<div>").addClass("message");
+            // ...append the username and text to the new div...
+            msgDiv.append(msgName);
+            msgDiv.append(msgText);
+
+            // ...and add the message's div to the chatbox div.
+            $("#chatbox").append(msgDiv);
+        });
+    }
+    displayChat();
+
+    function sendMessage() {
+        event.preventDefault();
+        if (playerNumber === 1) {
+            var msgUser = player1.name;
+        } else if (playerNumber === 2) {
+            var msgUser = player2.name;
+        } else {
+            var msgUser = "Spectator";
+        }
+        var msgText = $("#user-message").val().trim();
+
+        database.ref("chat").push({ username: msgUser, text: msgText });
+
+        $("#user-message").val("");
 
     }
 
@@ -323,20 +365,90 @@ $(function() {
         round = 0;
         // ...update the round variable in the database...
         database.ref().update({ round: round });
-        // ...delete user data from database.
         if (playerNumber === 1) {
+            // ...delete user data from database.
             database.ref().child("player/1").remove();
+            // ...remove the other user's choice...
             database.ref("player/2/choice").remove();
+            // ...and if there isn't another player...
+            if (!(thereIs2)) {
+                // ...delete the chat log.
+                database.ref().child("chat").remove();
+            }
         }
         if (playerNumber === 2) {
+            // ...delete user data from database.
             database.ref().child("player/2").remove();
+            // ...remove the other user's choice...
             database.ref("player/1/choice").remove();
+            // ...and if there isn't another player...
+            if (!(thereIs1)) {
+                // ...delete the chat log.
+                database.ref().child("chat").remove();
+            }
         }
 
     }
 
-
+    // On.click events.
     $(document).on("click", "#start", function(event) { initiateUser(); });
     $(document).on("click", ".choices", sendChoice);
+    $(document).on("click", "#submit-message", function(event) { sendMessage(); });
+    // Quit when the window is closed or refreshed.
     window.onbeforeunload = function() { quit() };
+
+    // Web credentials for messaging.
+    messaging.usePublicVapidKey("BIbDdMBnbuBmh6LIWR33R2IJuTwDUWg-QKTwU_rUz5t7pqSufYoXKpfZQOIptY8qbPTtqN72Q_45yD78IXzg0KI");
+
+    // Requests permission to receive notifications.
+    messaging.requestPermission()
+        .then(function() {
+            console.log('Notification permission granted.');
+            // TODO(developer): Retrieve an Instance ID token for use with FCM.
+        })
+        .catch(function(err) {
+            console.log("Unable to get permission to notify.", err);
+        });
+
+    // Get Instance ID token. Initially this makes a network call, once retrieved
+    // subsequent calls to getToken will return from cache.
+    messaging.getToken()
+        .then(function(currentToken) {
+            if (currentToken) {
+                sendTokenToServer(currentToken);
+                updateUIForPushEnabled(currentToken);
+            } else {
+                // Show permission request.
+                console.log('No Instance ID token available. Request permission to generate one.');
+                // Show permission UI.
+                updateUIForPushPermissionRequired();
+                setTokenSentToServer(false);
+            }
+        })
+        .catch(function(err) {
+            console.log('An error occurred while retrieving token. ', err);
+            showToken('Error retrieving Instance ID token. ', err);
+            setTokenSentToServer(false);
+        });
+
+    // Callback fired if Instance ID token is updated.
+    messaging.onTokenRefresh(function() {
+        messaging.getToken()
+            .then(function(refreshedToken) {
+                console.log('Token refreshed.');
+                // Indicate that the new Instance ID token has not yet been sent to the
+                // app server.
+                setTokenSentToServer(false);
+                // Send Instance ID token to app server.
+                sendTokenToServer(refreshedToken);
+                // ...
+            })
+            .catch(function(err) {
+                console.log('Unable to retrieve refreshed token ', err);
+                showToken('Unable to retrieve refreshed token ', err);
+            });
+    });
+
+
+
 });

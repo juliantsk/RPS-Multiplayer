@@ -7,3 +7,10 @@ body {
 .username {
     color: red;
 }
+
+#chatbox {
+    background-color: brown;
+    height: 200px;
+    width: 80%;
+    overflow-y: scroll;
+}
