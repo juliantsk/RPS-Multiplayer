@@ -2,10 +2,25 @@
 
 body {
     margin: 20px;
+    max-width: 700px;
+    margin: auto;
+    text-align: center;
 }
 
 .username {
     color: red;
+    font-size: 2em;
+}
+
+#user1,
+#announce,
+#user2 {
+    display: inline-block;
+    width: 200px;
+    height: 200px;
+    background-color: #e6e6e6;
+    margin: 10px;
+    vertical-align: top;
 }
 
 #chatbox {
@@ -13,4 +28,5 @@ body {
     height: 200px;
     width: 80%;
     overflow-y: scroll;
+    margin: 10px auto;
 }

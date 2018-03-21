@@ -341,7 +341,7 @@ $(function() {
     }
     displayChat();
 
-    function sendMessage() {
+    function sendMessage(arg) {
         event.preventDefault();
         if (playerNumber === 1) {
             var msgUser = player1.name;
@@ -350,7 +350,7 @@ $(function() {
         } else {
             var msgUser = "Spectator";
         }
-        var msgText = $("#user-message").val().trim();
+        var msgText = $("#user-message").val().trim() || arg;
 
         database.ref("chat").push({ username: msgUser, text: msgText });
 
@@ -366,6 +366,8 @@ $(function() {
         // ...update the round variable in the database...
         database.ref().update({ round: round });
         if (playerNumber === 1) {
+            // ...send a message that this user has left.
+            sendMessage("has disconnected.");
             // ...delete user data from database.
             database.ref().child("player/1").remove();
             // ...remove the other user's choice...
@@ -377,6 +379,8 @@ $(function() {
             }
         }
         if (playerNumber === 2) {
+            // ...send a message that this user has left.
+            sendMessage("has disconnected.");
             // ...delete user data from database.
             database.ref().child("player/2").remove();
             // ...remove the other user's choice...
