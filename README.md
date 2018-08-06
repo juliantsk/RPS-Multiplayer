@@ -8,12 +8,13 @@ Single-page asynchronous web application utilizing jQuery and Firebase to create
 * jQuery
 
 ## Play
-
+![An example of an online match.](https://juliantsk.github.io/assets/images/RPS/RPS5.PNG)
 * Up to two players sign on from their computers (all others who visit the website will be treated as spectators).
 * Players can choose between Rock, Paper, or Scissors during each round of play.
 * Winning is decided by the traditional rules (Rock beats Scissors, Scissors beats Paper, and Paper beats Rock).
 * Wins and loses are tracked for as long as players are signed in (a draw is never tracked).
 * Spectators can view each player's choices as they happen.
+![An example of an online match.](https://juliantsk.github.io/assets/images/RPS/RPS6.PNG)
 
 ## Authors
 
@@ -21,6 +22,6 @@ Single-page asynchronous web application utilizing jQuery and Firebase to create
 
 ## Acknowledgments
 
-* Thanks to University of Penn
-* Inspiration
-* etc
+* Thanks to University of Penn Coding Boot Camp
+* Thanks to TAs [David Sabin](http://www.davidsabin.me/index.html) and Ben Leibowitz-Lord for guiding me on this and other projects
+* Thanks to Anthony Briglia for teaching me
