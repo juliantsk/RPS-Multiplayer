@@ -4,7 +4,7 @@ Single-page asynchronous web application utilizing jQuery and Firebase to create
 
 ## Built With
 
-* [Firebase](https://firebase.google.com/docs/) - The web backend used
+* [Firebase](https://firebase.google.com/docs/)
 * jQuery
 
 ## Play
