@@ -18,7 +18,7 @@ Single-page asynchronous web application utilizing jQuery and Firebase to create
 
 ## Authors
 
-* **Julian Skodzinski** - *Sole Developer* - [Juliantsk](https://github.com/juliantsk)
+* **Julian Skodzinski** - *Developer* - [Juliantsk](https://github.com/juliantsk)
 
 ## Acknowledgments
 
