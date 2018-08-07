@@ -24,4 +24,4 @@ Single-page asynchronous web application utilizing jQuery and Firebase to create
 
 * Thanks to University of Penn Coding Boot Camp
 * Thanks to TAs [David Sabin](http://www.davidsabin.me/index.html) and [Ben Leibowitz-Lord](http://benleibowitzlord.com/) for guiding me on this and other projects
-* Thanks to Anthony Briglia for teaching me
+* Thanks to [Anthony Briglia](https://www.linkedin.com/in/anthony-briglia-3a888710/) for teaching me
